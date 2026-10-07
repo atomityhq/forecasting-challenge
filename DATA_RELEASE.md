@@ -1,6 +1,6 @@
 # Challenge Dataset Release
 
-The hiring dataset is distributed as a GitHub Release asset because it is intentionally large for a take-home exercise.
+The hiring dataset is distributed as a GitHub Release asset so that the fixed candidate data can be versioned separately from the source repository.
 
 ## Required release
 
@@ -10,33 +10,51 @@ Use the fixed release:
 data-v1
 ```
 
-The release asset should be named:
+The release asset is:
 
 ```text
-azure-challenge-data-v1.zip
+data-v1.tar.gz
 ```
+
+Download it from:
+
+https://github.com/atomityhq/forecasting-challenge/releases/tag/data-v1
 
 After extraction:
 
 ```text
 challenge_data/
-├── vm_metadata.csv
-├── cpu_readings_*.csv
-└── README.md
+├── vm_cpu_readings.csv.gz
+├── vm_metadata.csv.gz
+├── DATA_CARD.md
+└── SHA256SUMS
 ```
 
-## Expected size
+The release contains:
 
-The intended release size is approximately **1.5 GB compressed**. The exact byte size is not part of the assignment contract.
+- 10,000 selected VMs;
+- 134 CPU observations per VM;
+- 1,340,000 CPU observation rows;
+- five-minute sampling;
+- approximately 11.1 hours of observations per VM.
 
 ## Integrity
 
-The release should include a SHA-256 checksum file. Verify it before starting work:
+Verify the included checksums before starting work:
 
 ```bash
-sha256sum -c azure-challenge-data-v1.sha256
+cd challenge_data
+sha256sum -c SHA256SUMS
+```
+
+Expected:
+
+```text
+vm_cpu_readings.csv.gz: OK
+vm_metadata.csv.gz: OK
+DATA_CARD.md: OK
 ```
 
 ## Source attribution
 
-The dataset is a curated subset of Microsoft's Azure Public Dataset V2. See `SOURCES.md` and the upstream repository for attribution and current license terms.
+The dataset is a curated subset of Microsoft's Azure Public Dataset V2. See `SOURCES.md` and the bundled `DATA_CARD.md` for source attribution and dataset information.

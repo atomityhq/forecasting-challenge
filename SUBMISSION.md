@@ -16,8 +16,9 @@ timestamp,active_vm_count,aggregate_cpu_utilization
 
 ## Prediction requirements
 
-- one row per timestamp in the supplied forecast template;
-- timestamps must match exactly, in the same order;
+- exactly 24 rows;
+- one row for each timestamp in the final two-hour holdout;
+- timestamps must match the holdout timestamps exactly, in chronological order;
 - no duplicate timestamps;
 - no missing predictions;
 - all values must be finite numeric values;
@@ -26,6 +27,8 @@ timestamp,active_vm_count,aggregate_cpu_utilization
 
 Do not include an index column.
 
+The final 24 target observations are the public holdout. Do not use their observed target values for fitting, feature selection, hyperparameter tuning, or model selection.
+
 ## Reproduction
 
 Your README should expose one clear command that produces the prediction file from the supplied release data.
@@ -33,12 +36,12 @@ Your README should expose one clear command that produces the prediction file fr
 For example:
 
 ```bash
-python -m your_package.predict \
-  --data challenge_data \
-  --output predictions.csv
+python -m your_package.predict   --data challenge_data   --output predictions.csv
 ```
 
 The exact command is up to you.
+
+A reviewer should be able to reproduce the submission from a clean checkout without manually editing the generated prediction file.
 
 ## Repository hygiene
 

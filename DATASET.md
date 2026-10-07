@@ -10,81 +10,106 @@ Official V2 documentation:
 
 https://github.com/Azure/AzurePublicDataset/blob/master/AzurePublicDatasetV2.md
 
-Microsoft documents V2 as a 30-day trace with five-minute VM CPU utilization readings and VM information, with approximately 2.7 million VMs and 1.94 billion CPU readings in the full release. The official schema includes encrypted subscription/deployment/VM identifiers, VM creation/deletion timestamps, deployment size, CPU statistics, VM category, virtual-core bucket, memory bucket, and five-minute CPU statistics.
+The full upstream V2 dataset contains a much larger 30-day VM trace. This challenge distributes a small, deterministic subset suitable for a take-home exercise.
 
 ## 2. Challenge release
 
 The candidate dataset is the fixed **`data-v1`** release of this repository.
 
-The release is a real, curated subset of Azure Public Dataset V2. It is intentionally not committed to Git because the release asset is much larger than normal source files.
+The release is a real, curated subset of Azure Public Dataset V2.
 
-The release should be downloaded and extracted so that the repository looks like:
+Extract the release so that the repository looks like:
 
 ```text
 challenge_data/
-├── vm_metadata.csv
-├── cpu_readings_*.csv
-└── README.md
+├── vm_cpu_readings.csv.gz
+├── vm_metadata.csv.gz
+├── DATA_CARD.md
+└── SHA256SUMS
 ```
 
-The exact asset/file names are documented in the `data-v1` release itself.
+The CPU dataset contains exactly 10,000 VMs × 134 observations = 1,340,000 observations. Each VM has observations at five-minute intervals, spanning approximately 11.1 hours.
 
 ## 3. Row-level fields
 
-The curated release is based on the original V2 fields. Important fields include:
+### `vm_cpu_readings.csv.gz`
 
-| Field family | Meaning |
+Columns:
+
+| Field | Meaning |
 |---|---|
-| subscription/deployment/VM ID | anonymized identifiers from the upstream dataset |
-| VM created/deleted | VM lifecycle timestamps |
-| deployment size | size of the deployment represented in the trace |
-| CPU statistics | max/average/P95 and five-minute min/max/average CPU utilization |
-| VM category | workload category |
-| core bucket | virtual-core capacity bucket |
-| memory bucket | VM memory capacity bucket |
-| five-minute timestamp | workload observation time |
+| `timestamp` | observation timestamp in seconds relative to the source trace |
+| `vm_id` | anonymized VM identifier |
+| `min_cpu` | minimum CPU utilization during the five-minute interval |
+| `max_cpu` | maximum CPU utilization during the five-minute interval |
+| `avg_cpu` | average CPU utilization during the five-minute interval |
 
-Candidates should rely on the release's bundled README/schema for exact column names.
+### `vm_metadata.csv.gz`
+
+Columns:
+
+| Field | Meaning |
+|---|---|
+| `vm_id` | anonymized VM identifier |
+| `subscription_id` | anonymized subscription identifier |
+| `deployment_id` | anonymized deployment identifier |
+| `timestamp_vm_created` | VM creation timestamp |
+| `timestamp_vm_deleted` | VM deletion timestamp |
+| `max_cpu` | source VM-level maximum CPU statistic |
+| `avg_cpu` | source VM-level average CPU statistic |
+| `p95_max_cpu` | source VM-level P95 maximum CPU statistic |
+| `vm_category` | source VM workload category |
+| `virtual_core_bucket` | bucketed virtual-core count |
+| `memory_gb_bucket` | bucketed VM memory |
 
 ## 4. Required derived targets
 
-The candidate must construct the following aggregate time series.
+Construct these aggregate time series from the VM-level readings.
 
 ### `active_vm_count`
 
 For timestamp `t`:
 
 ```text
-active_vm_count(t) = number of distinct VM IDs with a valid CPU observation at t
+active_vm_count(t) =
+    number of distinct VM IDs with a valid CPU observation at t
 ```
 
-A VM must be counted at most once within a timestamp bucket.
+A VM must be counted at most once within a timestamp.
 
 ### `aggregate_cpu_utilization`
 
 For timestamp `t`:
 
 ```text
-aggregate_cpu_utilization(t) = mean of VM-level five-minute average CPU utilization at t
+aggregate_cpu_utilization(t) =
+    mean of VM-level avg_cpu values at t
 ```
 
-The target is a percentage in `[0,100]` when expressed in percent units.
+Express the result as a percentage in `[0,100]`.
 
-Candidates may propose another aggregate target as an extension, but the two targets above remain required.
+These two targets are required. Candidates may introduce additional targets as extensions.
 
 ## 5. Time handling
 
-Treat the trace timestamp as a five-minute observation grid.
+Treat the source timestamps as a five-minute observation grid.
 
 Candidates should:
 
-- normalize timestamps to a consistent timezone representation;
 - detect gaps and duplicates;
+- preserve the chronological ordering;
 - document any resampling;
 - avoid inventing target values for missing source observations without justification.
 
-## 6. Release boundary
+The challenge dataset has 134 observations per VM. The required forecasting split is described in `ASSIGNMENT.md`.
 
-The candidate release contains only the data required for training/analysis. It does **not** contain future target labels outside the public training window.
+## 6. Forecast holdout
 
-Do not attempt to reconstruct omitted source records or infer private evaluation material.
+For the core challenge, construct the aggregate target series and use:
+
+- the first 110 observations as the public training window;
+- the final 24 observations as the two-hour holdout horizon.
+
+The final 24 observations are part of the public release, so candidates must follow the stated holdout protocol and must not use those target values during model fitting, feature selection, hyperparameter tuning, or model selection.
+
+Do not reconstruct omitted upstream records or claim access to private evaluation material.

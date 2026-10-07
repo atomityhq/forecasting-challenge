@@ -13,7 +13,7 @@ We are not looking for a production-scale data platform. We are looking for a st
 
 Cloud infrastructure teams need to understand and forecast workload demand to make decisions around capacity, scaling, resource allocation, and operational headroom.
 
-You are given a curated subset of the **Microsoft Azure Public Dataset V2** VM trace. The upstream dataset contains anonymized VM telemetry sampled every five minutes together with VM metadata. The source contains 30 consecutive days of trace data from one geographical region.
+You are given a curated subset of the **Microsoft Azure Public Dataset V2** VM trace. The challenge release contains 10,000 VM traces, each with 134 CPU observations at five-minute intervals, plus the corresponding VM metadata. Each VM therefore has approximately 11.1 hours of continuous workload history.
 
 Your task is to answer:
 
@@ -25,11 +25,23 @@ There is no single expected model.
 
 # 2. Dataset
 
-The dataset in the `data-v1` GitHub Release is a real subset of Azure Public Dataset V2. It is distributed separately from the source code because it is intentionally large enough to resemble a real data-science workload while remaining practical for a laptop/workstation.
+The `data-v1` GitHub Release is a real, curated subset of Azure Public Dataset V2.
 
-The release contains a curated selection of Azure VM telemetry for the challenge population.
+It contains:
 
-At the row level, the upstream V2 schema includes fields for encrypted subscription/deployment/VM identifiers, VM creation/deletion timestamps, deployment size, CPU statistics, VM category, virtual-core bucket, memory bucket, and five-minute CPU statistics. See [`DATASET.md`](DATASET.md) for the challenge contract and interpretation guidance.
+- 10,000 VMs;
+- 134 CPU observations per VM;
+- 1,340,000 VM-level CPU observations in total;
+- five-minute sampling;
+- approximately 11.1 hours of continuous observations per VM;
+- VM metadata corresponding to every selected VM.
+
+The release contains two data files:
+
+- `vm_cpu_readings.csv.gz` — VM-level five-minute CPU readings;
+- `vm_metadata.csv.gz` — metadata for the selected VMs.
+
+See [`DATASET.md`](DATASET.md) for the exact challenge contract and field definitions.
 
 ---
 
@@ -66,15 +78,26 @@ For `active_vm_count`, count each VM at most once per timestamp.
 
 For `aggregate_cpu_utilization`, clearly document how you treat missing readings and any timestamp-level gaps.
 
-## C. Forecast the next 24 hours
+Construct the full target series first, then apply the 110/24 chronological split. Do not derive features for a training timestamp using target information from the holdout period.
 
-Produce a forecast for the **24-hour horizon immediately following the training window supplied by the challenge release**.
+## C. Forecast the final 2-hour holdout
 
-At five-minute cadence this corresponds to 288 forecast timestamps.
+Treat the first **110 observations** in the challenge time series as the public training window and the final **24 observations** as the holdout forecast horizon.
 
-The supplied forecast template contains those timestamps. Your output must contain one prediction for every requested timestamp.
+At five-minute cadence, the holdout horizon is **24 timestamps = 2 hours**.
 
-You may model at a coarser cadence, but your submission must be mapped back to every required timestamp and you must document how you performed that mapping.
+You must produce forecasts for:
+
+1. `active_vm_count`;
+2. `aggregate_cpu_utilization`.
+
+The holdout timestamps are the final 24 timestamps in the supplied dataset. Your submission must contain one prediction for each of those timestamps, in chronological order.
+
+**Do not use the observed target values from the final 24 timestamps when fitting, selecting, or tuning your final forecasting model.** Treat them as held-out test observations.
+
+You may use a coarser modeling cadence, but your submission must be mapped back to each required five-minute timestamp and you must document how you performed that mapping.
+
+Because the holdout is part of the public release, the challenge relies on the candidate following this protocol rather than on a hidden-label service. Reviewers may inspect the implementation and methodology for leakage.
 
 ## D. Build a baseline
 
@@ -264,7 +287,7 @@ A methodologically sound baseline-plus-ML solution can score very highly.
 Do not:
 
 - use future target values during feature construction;
-- use the hidden future period during model development;
+- use the final 24 holdout observations during model fitting, feature selection, hyperparameter tuning, or model selection;
 - randomly shuffle the time series for validation;
 - rely on private/proprietary data;
 - commit credentials or large generated artifacts to the repository;

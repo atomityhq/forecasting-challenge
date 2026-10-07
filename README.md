@@ -10,7 +10,49 @@ AI/ML take-home challenge built from the **Microsoft Azure Public Dataset V2** V
 4. Read [`SUBMISSION.md`](SUBMISSION.md).
 5. Implement your analysis and forecasting pipeline.
 
-The challenge dataset is distributed as a GitHub Release rather than committed to the repository because it is intentionally large (targeting roughly 1.5 GB compressed).
+The challenge dataset is distributed as a versioned GitHub Release rather than committed to the repository. The `data-v1` release contains the fixed curated dataset used for this assignment.
+
+## Environment setup
+
+Python **3.11 or newer** is required.
+
+Create a virtual environment:
+
+### Linux / macOS
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### Windows PowerShell
+
+```powershell
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+### Windows Command Prompt
+
+```cmd
+py -m venv .venv
+.venv\Scripts\activate.bat
+```
+
+Install the project and development dependencies:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+```
+
+Verify the installation:
+
+```bash
+python -m pytest -q
+```
+
+The repository includes a small test suite covering the starter forecasting utilities. Run it before beginning the assignment.
 
 ## Dataset download
 

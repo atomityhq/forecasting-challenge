@@ -14,18 +14,47 @@ The challenge dataset is distributed as a GitHub Release rather than committed t
 
 ## Dataset download
 
-The hiring dataset is the fixed `data-v1` release of this repository. Use the exact version named in your assignment invitation; do not substitute a different upstream Azure release.
+The hiring dataset is distributed as the fixed `data-v1` release of this repository.
 
-After downloading and extracting, the expected layout is:
+**Download:** [Azure Dataset v1 Release](https://github.com/atomityhq/forecasting-challenge/releases/tag/data-v1)
+
+Download `data-v1.tar.gz` from the release and extract it into the repository as `challenge_data/`:
+
+```bash
+mkdir -p challenge_data
+tar -xzf data-v1.tar.gz -C challenge_data
+```
+
+The resulting layout is:
 
 ```text
 challenge_data/
-├── vm_metadata.csv
-├── cpu_readings_*.csv
-└── README.md
+├── vm_cpu_readings.csv.gz
+├── vm_metadata.csv.gz
+├── DATA_CARD.md
+└── SHA256SUMS
 ```
 
-The release is a **real, curated subset of Azure Public Dataset V2**. It is not synthetic data.
+Verify the dataset before starting the assignment:
+
+```bash
+cd challenge_data
+sha256sum -c SHA256SUMS
+```
+
+You should see:
+
+```text
+vm_cpu_readings.csv.gz: OK
+vm_metadata.csv.gz: OK
+DATA_CARD.md: OK
+```
+
+The release is a real, curated subset of the Microsoft Azure Public Dataset V2. It is not synthetic data.
+
+The dataset contains 10,000 VMs with 134 CPU measurements per VM at five-minute intervals, for a total of 1,340,000 CPU observations.
+
+Use the exact `data-v1` release provided for this assignment. Do not substitute another dataset or a different version of the Azure Public Dataset.
 
 ## What you are solving
 
